@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>МебельСклад WMS — Управление складом мебельного цеха</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                        },
+                        amber: {
+                            500: '#f59e0b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 3px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="h-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-200 flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-full md:w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col justify-between shrink-0">
+        <div>
+            <!-- Logo Header -->
+            <div class="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-amber-500/30">
+                        <i class="fa-solid fa-couch"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base leading-tight">МебельСклад</h1>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">Система WMS v2.5</span>
+                    </div>
+                </div>
+                <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:inline"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-140px)]">
+                <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item active flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium transition text-amber-600 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span>Дашборд</span>
+                </a>
+                <a href="#" onclick="switchTab('materials')" id="nav-materials" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                    <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
+                    <span>Сырьё и фурнитура</span>
+                </a>
+                <a href="#" onclick="switchTab('products')" id="nav-products" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                    <i class="fa-solid fa-[#000] fa-dolly w-5 text-center"></i>
+                    <span>Готовая продукция</span>
+                </a>
+                <a href="#" onclick="switchTab('movement')" id="nav-movement" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                    <i class="fa-solid fa-arrow-right-arrow-left w-5 text-center"></i>
+                    <span>Приход / Расход</span>
+                </a>
+                <a href="#" onclick="switchTab('bom')" id="nav-bom" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                    <i class="fa-solid fa-clipboard-list w-5 text-center"></i>
+                    <span>Рецепты / БОМ</span>
+                </a>
+                <a href="#" onclick="switchTab('suppliers')" id="nav-suppliers" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+                    <i class="fa-solid fa-truck-field w-5 text-center"></i>
+                    <span>Поставщики и Заказ</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- User / Workshop Info -->
+        <div class="p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span class="flex items-center"><i class="fa-solid fa-industry mr-1.5 text-amber-500"></i> Цех №1 (Основной)</span>
+                <button onclick="resetDataToDefault()" title="Сбросить на тестовые данные" class="hover:text-red-500 transition">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-100 dark:bg-slate-900">
+
+        <!-- Top Notification Banner -->
+        <div id="toast" class="hidden fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-white transition-all transform duration-300">
+            <i id="toastIcon" class="fa-solid fa-circle-check"></i>
+            <span id="toastMessage">Операция выполнена успешно!</span>
+        </div>
+
+        <!-- Scrollable Content View -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+
+            <!-- TAB 1: DASHBOARD -->
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                <!-- Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Обзор складской базы</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm">Оперативные данные мебельного производства на сегодня</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="openModal('modalQuickMovement')" class="bg-amber-500 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg shadow-sm flex items-center space-x-2 transition text-sm">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Быстрое списание / приход</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">Всего сырья на складе</p>
+                            <h3 class="text-2xl font-extrabold mt-1" id="kpi-total-materials">0</h3>
+                            <p class="text-xs text-slate-500 mt-1"><span class="text-emerald-500 font-medium"><i class="fa-solid fa-layer-group"></i> 6 категорий</span></p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">Критический остаток</p>
+                            <h3 class="text-2xl font-extrabold mt-1 text-red-500" id="kpi-low-stock">0</h3>
+                            <p class="text-xs text-slate-500 mt-1">Требуют немедленной закупки</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/50 text-red-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">Стоимость сырья</p>
+                            <h3 class="text-2xl font-extrabold mt-1" id="kpi-total-value">0 ₽</h3>
+                            <p class="text-xs text-slate-500 mt-1">Закупленная стоимость</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">Готовые изделия</p>
+                            <h3 class="text-2xl font-extrabold mt-1 text-amber-500" id="kpi-ready-products">0</h3>
+                            <p class="text-xs text-slate-500 mt-1">Готовы к отгрузке</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-truck-ramp-box"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts & Alerts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Consumption Chart -->
+                    <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg">Динамика расхода материалов</h3>
+                            <span class="text-xs text-slate-500 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-full">За последние 7 дней</span>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="consumptionChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Critical Stock Alerts -->
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-bold text-lg flex items-center text-red-500">
+                                    <i class="fa-solid fa-bell mr-2"></i> Дефицитные позиции
+                                </h3>
+                                <button onclick="switchTab('suppliers')" class="text-xs text-amber-500 hover:underline">Заказать все</button>
+                            </div>
+                            <div id="dashboardAlertsList" class="space-y-3 overflow-y-auto max-h-60 pr-1">
+                                <!-- Dynamic alerts -->
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
+                            <button onclick="switchTab('materials')" class="w-full text-center text-sm font-medium text-amber-600 dark:text-amber-400 hover:underline">
+                                Перейти ко всем материалам &rarr;
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown & Recent Activity -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <h3 class="font-bold text-lg mb-4">Структура запасов по категориям</h3>
+                        <div class="h-56 relative flex items-center justify-center">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg">Последние движения на складе</h3>
+                            <button onclick="switchTab('movement')" class="text-xs text-amber-500 hover:underline">Вся история</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs uppercase text-slate-400 bg-slate-50 dark:bg-slate-700/50">
+                                    <tr>
+                                        <th class="p-2.5">Дата/Время</th>
+                                        <th class="p-2.5">Тип</th>
+                                        <th class="p-2.5">Наименование</th>
+                                        <th class="p-2.5">Кол-во</th>
+                                        <th class="p-2.5">Мастер</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboardRecentMovements" class="divide-y divide-slate-100 dark:divide-slate-700">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: MATERIALS STOCK -->
+            <section id="tab-materials" class="tab-content space-y-6 hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Склад сырья и фурнитуры</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm">Управление плитными материалами, кромкой, лаками и фурнитурой</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="exportToCSV('materialsTable', 'Материалы_МебельСклад.csv')" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-1">
+                            <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                            <span>Экспорт CSV</span>
+                        </button>
+                        <button onclick="openMaterialModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg shadow-sm flex items-center space-x-2 transition text-sm">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Добавить материал</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters & Search -->
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row gap-4 justify-between">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="materialsSearch" oninput="renderMaterialsTable()" placeholder="Поиск по названию или артикулу..." class="w-full pl-9 pr-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <select id="materialsCategoryFilter" onchange="renderMaterialsTable()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                            <option value="ALL">Все категории</option>
+                            <option value="ЛДСП/МДФ">ЛДСП/МДФ</option>
+                            <option value="Шпон/Кромка">Шпон/Кромка</option>
+                            <option value="Фурнитура">Фурнитура</option>
+                            <option value="Лакокрасочные">Лакокрасочные (ЛКМ)</option>
+                            <option value="Поролон/Ткани">Поролон/Ткани</option>
+                            <option value="Крепеж">Крепеж</option>
+                        </select>
+                        <select id="materialsStatusFilter" onchange="renderMaterialsTable()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                            <option value="ALL">Все статусы</option>
+                            <option value="OK">В наличии</option>
+                            <option value="LOW">Низкий остаток</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Materials Table -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table id="materialsTable" class="w-full text-sm text-left">
+                            <thead class="text-xs uppercase bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                <tr>
+                                    <th class="p-3.5">Артикул / Название</th>
+                                    <th class="p-3.5">Категория</th>
+                                    <th class="p-3.5">Текущий остаток</th>
+                                    <th class="p-3.5">Мин. остаток</th>
+                                    <th class="p-3.5">Ед. изм.</th>
+                                    <th class="p-3.5">Цена за ед.</th>
+                                    <th class="p-3.5">Общая стоимость</th>
+                                    <th class="p-3.5">Статус</th>
+                                    <th class="p-3.5 text-right">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materialsTableBody" class="divide-y divide-slate-100 dark:divide-slate-700">
+                                <!-- Dynamic materials -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: FINISHED PRODUCTS & SEMI-FINISHED -->
+            <section id="tab-products" class="tab-content space-y-6 hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Склад готовой продукции и полуфабрикатов</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm">Учет собранной мебели и готовых деталей/заготовок цеха</p>
+                    </div>
+                    <button onclick="openProductModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg shadow-sm flex items-center space-x-2 transition text-sm">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Добавить изделие/заготовку</span>
+                    </button>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row gap-4 justify-between">
+                    <input type="text" id="productSearch" oninput="renderProductsTable()" placeholder="Поиск по изделиям..." class="w-full sm:w-80 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:border-amber-500">
+                    <select id="productStatusFilter" onchange="renderProductsTable()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg px-3 py-2 focus:outline-none">
+                        <option value="ALL">Все статусы</option>
+                        <option value="В производстве">В производстве</option>
+                        <option value="Готово к отгрузке">Готово к отгрузке</option>
+                        <option value="Отгружено">Отгружено</option>
+                    </select>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs uppercase bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                <tr>
+                                    <th class="p-3.5">Код / Изделие</th>
+                                    <th class="p-3.5">Тип</th>
+                                    <th class="p-3.5">Заказчик / Проект</th>
+                                    <th class="p-3.5">Кол-во</th>
+                                    <th class="p-3.5">Себестоимость</th>
+                                    <th class="p-3.5">Статус</th>
+                                    <th class="p-3.5 text-right">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody" class="divide-y divide-slate-100 dark:divide-slate-700">
+                                <!-- Dynamic products -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: IN / OUT MOVEMENTS -->
+            <section id="tab-movement" class="tab-content space-y-6 hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Приход и Расход материалов</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm">Журнал складских операций и регистрация поставок / списаний</p>
+                    </div>
+                    <button onclick="openModal('modalQuickMovement')" class="bg-amber-500 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg shadow-sm flex items-center space-x-2 transition text-sm">
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                        <span>Оформить Приход/Расход</span>
+                    </button>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <button onclick="filterMovements('ALL')" id="btn-mov-all" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 text-white">Все операции</button>
+                        <button onclick="filterMovements('IN')" id="btn-mov-in" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Приходы (+)</button>
+                        <button onclick="filterMovements('OUT')" id="btn-mov-out" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Расходы (-)</button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs uppercase bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400">
+                                <tr>
+                                    <th class="p-3">Дата</th>
+                                    <th class="p-3">Тип</th>
+                                    <th class="p-3">Материал</th>
+                                    <th class="p-3">Кол-во</th>
+                                    <th class="p-3">Мастер / Ответственный</th>
+                                    <th class="p-3">Причина / Комментарий</th>
+                                </tr>
+                            </thead>
+                            <tbody id="movementsTableBody" class="divide-y divide-slate-100 dark:divide-slate-700">
+                                <!-- Dynamic history -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: BILL OF MATERIALS (BOM) -->
+            <section id="tab-bom" class="tab-content space-y-6 hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Спецификации изделий (BOM)</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm">Техкарты изделий с автосписанием материалов со склада в один клик</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- BOM List -->
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-lg">Стандартные изделия</h3>
+                        <div id="bomListCards" class="space-y-3">
+                            <!-- Dynamic BOM Cards -->
+                        </div>
+                    </div>
+
+                    <!-- BOM Details / Execution -->
+                    <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+                        <div id="bomDetailView">
+                            <div class="text-center py-12 text-slate-400">
+                                <i class="fa-solid fa-clipboard-check text-4xl mb-3"></i>
+                                <p>Выберите изделие слева для просмотра состава спецификации</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: SUPPLIERS & PURCHASE ORDERS -->
+            <section id="tab-suppliers" class="tab-content space-y-6 hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Поставщики и Закупка</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm">Партнеры и автоматическое формирование заявки на закупку дефицитных материалов</p>
+                    </div>
+                    <button onclick="generatePurchaseOrder()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm flex items-center space-x-2 transition text-sm">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Сформировать Заявку на Закупку</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Suppliers List -->
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                        <h3 class="font-bold text-lg flex items-center justify-between">
+                            <span>База Поставщиков</span>
+                            <button onclick="openSupplierModal()" class="text-xs bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded hover:bg-amber-500 hover:text-white transition">+ Добавить</button>
+                        </h3>
+                        <div id="suppliersContainer" class="space-y-3">
+                            <!-- Dynamic suppliers -->
+                        </div>
+                    </div>
+
+                    <!-- Auto Purchase Order Preview -->
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-4 border-b pb-3 border-slate-200 dark:border-slate-700">
+                                <h3 class="font-bold text-lg text-emerald-600 dark:text-emerald-400 flex items-center">
+                                    <i class="fa-solid fa-file-invoice mr-2"></i> Проект Заявки на закупку
+                                </h3>
+                                <span class="text-xs bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-medium px-2 py-0.5 rounded">Автопотребность</span>
+                            </div>
+                            <div id="purchaseOrderPreview" class="space-y-3 text-sm">
+                                <p class="text-slate-400 text-center py-6">Нажмите "Сформировать Заявку" выше для расчета требуемых материалов.</p>
+                            </div>
+                        </div>
+                        <div id="poActions" class="hidden mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end space-x-2">
+                            <button onclick="copyPOToClipboard()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-1">
+                                <i class="fa-solid fa-copy"></i>
+                                <span>Скопировать текст</span>
+                            </button>
+                            <button onclick="confirmPurchaseOrderReceived()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-1">
+                                <i class="fa-solid fa-check"></i>
+                                <span>Принять все на склад</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- MODAL 1: ADD/EDIT MATERIAL -->
+    <div id="modalMaterial" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3 border-slate-200 dark:border-slate-700">
+                <h3 id="modalMaterialTitle" class="text-lg font-bold">Добавить материал</h3>
+                <button onclick="closeModal('modalMaterial')" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="materialForm" onsubmit="saveMaterial(event)" class="space-y-3">
+                <input type="hidden" id="mat-id">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Наименование материала *</label>
+                    <input type="text" id="mat-name" required placeholder="Например: ЛДСП Egger Дуб Хантон 18мм" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Артикул / SKI</label>
+                        <input type="text" id="mat-sku" placeholder="MAT-001" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Категория *</label>
+                        <select id="mat-category" required class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                            <option value="ЛДСП/МДФ">ЛДСП/МДФ</option>
+                            <option value="Шпон/Кромка">Шпон/Кромка</option>
+                            <option value="Фурнитура">Фурнитура</option>
+                            <option value="Лакокрасочные">Лакокрасочные</option>
+                            <option value="Поролон/Ткани">Поролон/Ткани</option>
+                            <option value="Крепеж">Крепеж</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Текущий остаток</label>
+                        <input type="number" step="0.01" id="mat-quantity" required value="0" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Мин. остаток</label>
+                        <input type="number" step="0.01" id="mat-min" required value="10" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Ед. измерение</label>
+                        <select id="mat-unit" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                            <option value="лист">лист</option>
+                            <option value="м²">м²</option>
+                            <option value="п.м">п.м</option>
+                            <option value="шт">шт</option>
+                            <option value="л">л</option>
+                            <option value="кг">кг</option>
+                            <option value="компл">компл</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Закупочная цена за ед. (₽)</label>
+                    <input type="number" step="0.01" id="mat-price" required value="0" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                </div>
+                <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" onclick="closeModal('modalMaterial')" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm font-medium">Отмена</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: QUICK MOVEMENT (IN / OUT) -->
+    <div id="modalQuickMovement" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3 border-slate-200 dark:border-slate-700">
+                <h3 class="text-lg font-bold">Оформление движения</h3>
+                <button onclick="closeModal('modalQuickMovement')" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveMovement(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Тип операции</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer has-[:checked]:bg-emerald-500 has-[:checked]:text-white">
+                            <input type="radio" name="mov-type" value="IN" checked class="hidden" onchange="toggleSupplierField()">
+                            <span class="text-sm font-medium"><i class="fa-solid fa-circle-arrow-down mr-1"></i> Приход (+)</span>
+                        </label>
+                        <label class="flex items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer has-[:checked]:bg-red-500 has-[:checked]:text-white">
+                            <input type="radio" name="mov-type" value="OUT" class="hidden" onchange="toggleSupplierField()">
+                            <span class="text-sm font-medium"><i class="fa-solid fa-circle-arrow-up mr-1"></i> Расход (-)</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Выбор материала *</label>
+                    <select id="mov-material-id" required class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                        <!-- Dynamic Material List -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Количество *</label>
+                    <input type="number" step="0.01" id="mov-amount" required placeholder="0.00" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Ответственный мастер / Кладовщик</label>
+                    <input type="text" id="mov-author" placeholder="Иван (Мастер распила)" required class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Причина / Примечание / № заказа</label>
+                    <input type="text" id="mov-comment" placeholder="На заказ №104 (Кухня)" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                </div>
+                <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" onclick="closeModal('modalQuickMovement')" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm font-medium">Отмена</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium">Провести</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: ADD PRODUCT -->
+    <div id="modalProduct" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3 border-slate-200 dark:border-slate-700">
+                <h3 class="text-lg font-bold">Готовое изделие / Заготовка</h3>
+                <button onclick="closeModal('modalProduct')" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveProduct(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Наименование изделия *</label>
+                    <input type="text" id="prod-name" required placeholder="Шкаф-купе 3-дверный" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Тип</label>
+                        <select id="prod-type" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                            <option value="Готовая мебель">Готовая мебель</option>
+                            <option value="Заготовка/Фасад">Заготовка / Фасад</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Количество</label>
+                        <input type="number" id="prod-qty" required value="1" min="1" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Клиент / Проект / Заказ</label>
+                    <input type="text" id="prod-client" placeholder="Заказ #204 - ЖK 'Рассвет'" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Статус</label>
+                    <select id="prod-status" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                        <option value="В производстве">В производстве</option>
+                        <option value="Готово к отгрузке">Готово к отгрузке</option>
+                        <option value="Отгружено">Отгружено</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" onclick="closeModal('modalProduct')" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm font-medium">Отмена</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: SUPPLIER -->
+    <div id="modalSupplier" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3 border-slate-200 dark:border-slate-700">
+                <h3 class="text-lg font-bold">Новый Поставщик</h3>
+                <button onclick="closeModal('modalSupplier')" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveSupplier(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Название компании *</label>
+                    <input type="text" id="sup-name" required placeholder="ООО 'МДФ-Комплект'" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Поставляемые категории</label>
+                    <input type="text" id="sup-category" placeholder="ЛДСП, Кромки ПВХ" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Телефон</label>
+                        <input type="text" id="sup-phone" placeholder="+7 (900) 000-00-00" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Контактное лицо</label>
+                        <input type="text" id="sup-contact" placeholder="Алексей" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" onclick="closeModal('modalSupplier')" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm font-medium">Отмена</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- APPLICATION SCRIPT LOGIC -->
+    <script>
+        // Default Mock Data for Furniture Workshop
+        const INITIAL_DATA = {
+            materials: [
+                { id: "M1", sku: "PL-01", name: "ЛДСП Egger 16мм Дуб Анкор белый (2800x2070)", category: "ЛДСП/МДФ", quantity: 38, minQty: 15, unit: "лист", price: 3450 },
+                { id: "M2", sku: "PL-02", name: "МДФ 18мм шлифованный (2800x2070)", category: "ЛДСП/МДФ", quantity: 6, minQty: 10, unit: "лист", price: 4200 },
+                { id: "M3", sku: "KR-12", name: "Кромка ПВХ Rehau 2x19мм Дуб Анкор", category: "Шпон/Кромка", quantity: 85, minQty: 100, unit: "п.м", price: 45 },
+                { id: "M4", sku: "FR-01", name: "Петля Blum Clip Top 110° с доводчиком", category: "Фурнитура", quantity: 140, minQty: 50, unit: "шт", price: 280 },
+                { id: "M5", sku: "FR-02", name: "Направляющие скрытого монтажа Blum 500мм", category: "Фурнитура", quantity: 12, minQty: 20, unit: "компл", price: 1650 },
+                { id: "M6", sku: "LK-05", name: "Эмаль полиуретановая Renner белая", category: "Лакокрасочные", quantity: 8, minQty: 15, unit: "л", price: 1200 },
+                { id: "M7", sku: "PR-30", name: "Поролон ППУ Highfoam 3040 (2000x1000x50мм)", category: "Поролон/Ткани", quantity: 24, minQty: 10, unit: "лист", price: 1850 },
+                { id: "M8", sku: "KR-99", name: "Конфирмат 7х50 оцинкованный", category: "Крепеж", quantity: 2500, minQty: 1000, unit: "шт", price: 3.5 }
+            ],
+            products: [
+                { id: "P1", name: "Кухонный гарнитур 'Модерн-Белый'", type: "Готовая мебель", qty: 2, client: "Заказ #102 - ООО Вектор", cost: 85000, status: "Готово к отгрузке" },
+                { id: "P2", name: "Шкаф-купе 3-дверный с зеркалом", type: "Готовая мебель", qty: 1, client: "ИП Смирнов", cost: 42000, status: "В производстве" },
+                { id: "P3", name: "Фасады МДФ в эмали (комплект)", type: "Заготовка/Фасад", qty: 12, client: "Внутренний резерв", cost: 18000, status: "В производстве" }
+            ],
+            movements: [
+                { id: "T1", date: "2026-10-15 11:30", type: "IN", materialId: "M1", materialName: "ЛДСП Egger 16мм", qty: 20, author: "Складской мастер", comment: "Поставка от ТД ПлитТорг" },
+                { id: "T2", date: "2026-10-16 09:15", type: "OUT", materialId: "M4", materialName: "Петля Blum Clip Top", qty: 40, author: "Михаил (Сборщик)", comment: "Списание на Кухню #102" },
+                { id: "T3", date: "2026-10-17 10:00", type: "OUT", materialId: "M2", materialName: "МДФ 18мм шлифованный", qty: 4, author: "Мастер распила", comment: "Распил на фасады" }
+            ],
+            boms: [
+                {
+                    id: "BOM1",
+                    title: "Шкаф-купе двухдверный (2000х2400х600)",
+                    description: "Стандартный двухдверный корпус из ЛДСП с фурнитурой",
+                    items: [
+                        { materialId: "M1", name: "ЛДСП Egger 16мм", requiredQty: 3.5, unit: "лист" },
+                        { materialId: "M3", name: "Кромка ПВХ Rehau 2x19мм", requiredQty: 45, unit: "п.м" },
+                        { materialId: "M8", name: "Конфирмат 7х50", requiredQty: 60, unit: "шт" }
+                    ]
+                },
+                {
+                    id: "BOM2",
+                    title: "Тумба прикроватная 2 ящика",
+                    description: "Компактная тумба со скрытыми направляющими Blum",
+                    items: [
+                        { materialId: "M1", name: "ЛДСП Egger 16мм", requiredQty: 0.8, unit: "лист" },
+                        { materialId: "M5", name: "Направляющие скрытого монтажа Blum", requiredQty: 2, unit: "компл" },
+                        { materialId: "M3", name: "Кромка ПВХ Rehau 2x19мм", requiredQty: 12, unit: "п.м" }
+                    ]
+                }
+            ],
+            suppliers: [
+                { id: "S1", name: "ТД 'ПлитТорг Сервис'", category: "ЛДСП, МДФ, ХДФ", phone: "+7 (495) 123-45-67", contact: "Анатолий" },
+                { id: "S2", name: "Фирменный Центр Blum", category: "Фурнитура и механизмы", phone: "+7 (800) 555-35-35", contact: "Елена" },
+                { id: "S3", name: "ЛКМ-Технология", category: "Лаки, эмали, грунты", phone: "+7 (495) 987-65-43", contact: "Дмитрий" }
+            ]
+        };
+
+        // App State
+        let db = { ...INITIAL_DATA };
+        let consumptionChartInstance = null;
+        let categoryChartInstance = null;
+        let currentMovFilter = 'ALL';
+
+        // Load & Save LocalStorage
+        function loadDatabase() {
+            const saved = localStorage.getItem('mebel_wms_db');
+            if (saved) {
+                try {
+                    db = JSON.parse(saved);
+                } catch (e) {
+                    console.error("Failed to parse local storage", e);
+                    db = { ...INITIAL_DATA };
+                }
+            } else {
+                saveDatabase();
+            }
+        }
+
+        function saveDatabase() {
+            localStorage.setItem('mebel_wms_db', JSON.stringify(db));
+        }
+
+        function resetDataToDefault() {
+            if (confirm("Вы уверены, что хотите сбросить данные к первоначальным тестовым?")) {
+                localStorage.removeItem('mebel_wms_db');
+                db = JSON.parse(JSON.stringify(INITIAL_DATA));
+                saveDatabase();
+                initApp();
+                showToast("Данные успешно сброшены!");
+            }
+        }
+
+        // Initialize App
+        window.onload = function() {
+            loadDatabase();
+            initApp();
+        };
+
+        function initApp() {
+            renderDashboard();
+            renderMaterialsTable();
+            renderProductsTable();
+            renderMovementsTable();
+            renderBOMList();
+            renderSuppliers();
+            populateMaterialSelects();
+        }
+
+        // UI Notification Toast
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            toastMsg.innerText = message;
+            
+            if (type === "success") {
+                toast.className = "fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-white bg-emerald-600 transition-all transform duration-300";
+            } else {
+                toast.className = "fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-white bg-red-600 transition-all transform duration-300";
+            }
+
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'text-amber-600', 'bg-amber-50', 'dark:bg-amber-950/40', 'dark:text-amber-400');
+                el.classList.add('text-slate-600', 'dark:text-slate-300');
+            });
+
+            const selectedTab = document.getElementById(`tab-${tabId}`);
+            if (selectedTab) selectedTab.classList.remove('hidden');
+
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.add('active', 'text-amber-600', 'bg-amber-50', 'dark:bg-amber-950/40', 'dark:text-amber-400');
+                activeNav.classList.remove('text-slate-600', 'dark:text-slate-300');
+            }
+
+            if (tabId === 'dashboard') {
+                renderDashboard();
+            }
+        }
+
+        // Dark / Light Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            // Re-render charts for appropriate colors
+            renderDashboardCharts();
+        }
+
+        // --- DASHBOARD LOGIC ---
+        function renderDashboard() {
+            // Stats Calculation
+            const totalItems = db.materials.length;
+            const lowStockItems = db.materials.filter(m => Number(m.quantity) <= Number(m.minQty));
+            const totalValue = db.materials.reduce((sum, m) => sum + (Number(m.quantity) * Number(m.price)), 0);
+            const readyProducts = db.products.filter(p => p.status === 'Готово к отгрузке').reduce((sum, p) => sum + Number(p.qty), 0);
+
+            document.getElementById('kpi-total-materials').innerText = totalItems;
+            document.getElementById('kpi-low-stock').innerText = lowStockItems.length;
+            document.getElementById('kpi-total-value').innerText = totalValue.toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('kpi-ready-products').innerText = readyProducts + ' шт';
+
+            // Critical alerts list
+            const alertsContainer = document.getElementById('dashboardAlertsList');
+            if (lowStockItems.length === 0) {
+                alertsContainer.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Все запасы в норме. Дефицита нет.</p>`;
+            } else {
+                alertsContainer.innerHTML = lowStockItems.map(m => `
+                    <div class="p-2.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-800 dark:text-slate-200">${m.name}</p>
+                            <p class="text-[11px] text-red-600 dark:text-red-400">Остаток: ${m.quantity} ${m.unit} (Мин: ${m.minQty} ${m.unit})</p>
+                        </div>
+                        <button onclick="quickAddStock('${m.id}')" class="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded shadow transition" title="Быстро приходовать">
+                            + Заказать
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            // Recent activity table
+            const recentMovements = db.movements.slice(-5).reverse();
+            const recentBody = document.getElementById('dashboardRecentMovements');
+            recentBody.innerHTML = recentMovements.map(m => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                    <td class="p-2.5 text-xs text-slate-500">${m.date}</td>
+                    <td class="p-2.5">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded ${m.type === 'IN' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'}">
+                            ${m.type === 'IN' ? 'ПРИХОД' : 'РАСХОД'}
+                        </span>
+                    </td>
+                    <td class="p-2.5 font-medium text-xs">${m.materialName}</td>
+                    <td class="p-2.5 text-xs font-bold">${m.type === 'IN' ? '+' : '-'}${m.qty}</td>
+                    <td class="p-2.5 text-xs text-slate-500">${m.author}</td>
+                </tr>
+            `).join('');
+
+            renderDashboardCharts();
+        }
+
+        function renderDashboardCharts() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            // 1. Consumption Chart (Line)
+            const ctx1 = document.getElementById('consumptionChart').getContext('2d');
+            if (consumptionChartInstance) consumptionChartInstance.destroy();
+
+            consumptionChartInstance = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+                    datasets: [
+                        {
+                            label: 'Расход ЛДСП/МДФ (листов)',
+                            data: [12, 19, 8, 15, 22, 10, 4],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Расход Фурнитуры (ед)',
+                            data: [45, 80, 52, 110, 95, 40, 15],
+                            borderColor: '#0284c7',
+                            backgroundColor: 'transparent',
+                            borderDash: [5, 5],
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: textColor, font: { family: 'Inter' } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: textColor } },
+                        y: { ticks: { color: textColor } }
+                    }
+                }
+            });
+
+            // 2. Category Pie Chart
+            const ctx2 = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChartInstance) categoryChartInstance.destroy();
+
+            const categories = ['ЛДСП/МДФ', 'Шпон/Кромка', 'Фурнитура', 'Лакокрасочные', 'Поролон/Ткани', 'Крепеж'];
+            const counts = categories.map(cat => db.materials.filter(m => m.category === cat).length);
+
+            categoryChartInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: ['#f59e0b', '#0284c7', '#10b981', '#8b5cf6', '#ec4899', '#64748b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: textColor, font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        // --- MATERIALS TABLE LOGIC ---
+        function renderMaterialsTable() {
+            const search = document.getElementById('materialsSearch').value.toLowerCase();
+            const catFilter = document.getElementById('materialsCategoryFilter').value;
+            const statusFilter = document.getElementById('materialsStatusFilter').value;
+
+            const filtered = db.materials.filter(m => {
+                const matchesSearch = m.name.toLowerCase().includes(search) || m.sku.toLowerCase().includes(search);
+                const matchesCat = catFilter === 'ALL' || m.category === catFilter;
+                const isLow = Number(m.quantity) <= Number(m.minQty);
+                const matchesStatus = statusFilter === 'ALL' || (statusFilter === 'LOW' ? isLow : !isLow);
+                return matchesSearch && matchesCat && matchesStatus;
+            });
+
+            const tbody = document.getElementById('materialsTableBody');
+            tbody.innerHTML = filtered.map(m => {
+                const isLow = Number(m.quantity) <= Number(m.minQty);
+                const totalMatVal = Number(m.quantity) * Number(m.price);
+                return `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition">
+                        <td class="p-3.5">
+                            <div class="font-semibold text-slate-800 dark:text-slate-100">${m.name}</div>
+                            <div class="text-xs text-slate-400">SKU: ${m.sku}</div>
+                        </td>
+                        <td class="p-3.5"><span class="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 font-medium">${m.category}</span></td>
+                        <td class="p-3.5 font-bold text-base ${isLow ? 'text-red-500' : ''}">${m.quantity}</td>
+                        <td class="p-3.5 text-slate-400 text-xs">${m.minQty}</td>
+                        <td class="p-3.5 text-xs text-slate-500">${m.unit}</td>
+                        <td class="p-3.5 text-xs">${Number(m.price).toLocaleString()} ₽</td>
+                        <td class="p-3.5 font-semibold text-xs">${totalMatVal.toLocaleString()} ₽</td>
+                        <td class="p-3.5">
+                            ${isLow ? 
+                                `<span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Мало</span>` : 
+                                `<span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><i class="fa-solid fa-check mr-1"></i> Окей</span>`
+                            }
+                        </td>
+                        <td class="p-3.5 text-right space-x-1">
+                            <button onclick="editMaterial('${m.id}')" class="p-1.5 text-slate-400 hover:text-amber-500 transition" title="Редактировать"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteMaterial('${m.id}')" class="p-1.5 text-slate-400 hover:text-red-500 transition" title="Удалить"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openMaterialModal(mat = null) {
+            document.getElementById('modalMaterialTitle').innerText = mat ? 'Редактировать материал' : 'Добавить материал';
+            document.getElementById('mat-id').value = mat ? mat.id : '';
+            document.getElementById('mat-name').value = mat ? mat.name : '';
+            document.getElementById('mat-sku').value = mat ? mat.sku : 'MAT-' + Math.floor(100 + Math.random() * 900);
+            document.getElementById('mat-category').value = mat ? mat.category : 'ЛДСП/МДФ';
+            document.getElementById('mat-quantity').value = mat ? mat.quantity : 0;
+            document.getElementById('mat-min').value = mat ? mat.minQty : 10;
+            document.getElementById('mat-unit').value = mat ? mat.unit : 'лист';
+            document.getElementById('mat-price').value = mat ? mat.price : 0;
+
+            openModal('modalMaterial');
+        }
+
+        function saveMaterial(e) {
+            e.preventDefault();
+            const id = document.getElementById('mat-id').value;
+            const newMat = {
+                id: id || 'M' + Date.now(),
+                sku: document.getElementById('mat-sku').value,
+                name: document.getElementById('mat-name').value,
+                category: document.getElementById('mat-category').value,
+                quantity: parseFloat(document.getElementById('mat-quantity').value),
+                minQty: parseFloat(document.getElementById('mat-min').value),
+                unit: document.getElementById('mat-unit').value,
+                price: parseFloat(document.getElementById('mat-price').value)
+            };
+
+            if (id) {
+                const idx = db.materials.findIndex(m => m.id === id);
+                if (idx !== -1) db.materials[idx] = newMat;
+            } else {
+                db.materials.push(newMat);
+            }
+
+            saveDatabase();
+            closeModal('modalMaterial');
+            renderMaterialsTable();
+            populateMaterialSelects();
+            renderDashboard();
+            showToast("Материал успешно сохранен!");
+        }
+
+        function editMaterial(id) {
+            const mat = db.materials.find(m => m.id === id);
+            if (mat) openMaterialModal(mat);
+        }
+
+        function deleteMaterial(id) {
+            if (confirm("Вы уверены, что хотите удалить позицию?")) {
+                db.materials = db.materials.filter(m => m.id !== id);
+                saveDatabase();
+                renderMaterialsTable();
+                populateMaterialSelects();
+                renderDashboard();
+                showToast("Материал удален", "error");
+            }
+        }
+
+        // --- PRODUCTS TABLE LOGIC ---
+        function renderProductsTable() {
+            const search = document.getElementById('productSearch').value.toLowerCase();
+            const statusFilter = document.getElementById('productStatusFilter').value;
+
+            const filtered = db.products.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(search) || p.client.toLowerCase().includes(search);
+                const matchesStatus = statusFilter === 'ALL' || p.status === statusFilter;
+                return matchesSearch && matchesStatus;
+            });
+
+            const tbody = document.getElementById('productsTableBody');
+            tbody.innerHTML = filtered.map(p => {
+                let badgeClass = "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300";
+                if (p.status === 'Готово к отгрузке') badgeClass = "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300";
+                if (p.status === 'Отгружено') badgeClass = "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300";
+
+                return `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition">
+                        <td class="p-3.5 font-semibold">${p.name}</td>
+                        <td class="p-3.5 text-xs text-slate-500">${p.type}</td>
+                        <td class="p-3.5 text-xs">${p.client}</td>
+                        <td class="p-3.5 font-bold">${p.qty} шт</td>
+                        <td class="p-3.5 text-xs">${Number(p.cost).toLocaleString()} ₽</td>
+                        <td class="p-3.5">
+                            <span class="text-xs px-2.5 py-1 rounded-full font-semibold ${badgeClass}">${p.status}</span>
+                        </td>
+                        <td class="p-3.5 text-right space-x-1">
+                            <button onclick="changeProductStatus('${p.id}')" class="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded hover:bg-amber-500 hover:text-white transition">Сменить статус</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openProductModal() {
+            openModal('modalProduct');
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const newProd = {
+                id: 'P' + Date.now(),
+                name: document.getElementById('prod-name').value,
+                type: document.getElementById('prod-type').value,
+                qty: parseInt(document.getElementById('prod-qty').value),
+                client: document.getElementById('prod-client').value || 'Без привязки',
+                cost: 0,
+                status: document.getElementById('prod-status').value
+            };
+            db.products.push(newProd);
+            saveDatabase();
+            closeModal('modalProduct');
+            renderProductsTable();
+            renderDashboard();
+            showToast("Изделие зафиксировано!");
+        }
+
+        function changeProductStatus(id) {
+            const prod = db.products.find(p => p.id === id);
+            if (!prod) return;
+            const statuses = ['В производстве', 'Готово к отгрузке', 'Отгружено'];
+            const nextIdx = (statuses.indexOf(prod.status) + 1) % statuses.length;
+            prod.status = statuses[nextIdx];
+            saveDatabase();
+            renderProductsTable();
+            renderDashboard();
+            showToast(`Статус обновлен на: ${prod.status}`);
+        }
+
+        // --- MOVEMENTS (IN/OUT) LOGIC ---
+        function renderMovementsTable() {
+            const tbody = document.getElementById('movementsTableBody');
+            const filtered = db.movements.filter(m => currentMovFilter === 'ALL' || m.type === currentMovFilter);
+
+            tbody.innerHTML = filtered.slice().reverse().map(m => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                    <td class="p-3 text-xs text-slate-500">${m.date}</td>
+                    <td class="p-3">
+                        <span class="text-xs font-bold px-2 py-0.5 rounded ${m.type === 'IN' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'}">
+                            ${m.type === 'IN' ? '+ ПРИХОД' : '- РАСХОД'}
+                        </span>
+                    </td>
+                    <td class="p-3 font-semibold text-xs">${m.materialName}</td>
+                    <td class="p-3 font-bold text-sm ${m.type === 'IN' ? 'text-emerald-600' : 'text-red-500'}">${m.type === 'IN' ? '+' : '-'}${m.qty}</td>
+                    <td class="p-3 text-xs">${m.author}</td>
+                    <td class="p-3 text-xs text-slate-500">${m.comment || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterMovements(type) {
+            currentMovFilter = type;
+            ['all', 'in', 'out'].forEach(t => {
+                const btn = document.getElementById(`btn-mov-${t}`);
+                if (t === type.toLowerCase()) {
+                    btn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 text-white";
+                } else {
+                    btn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300";
+                }
+            });
+            renderMovementsTable();
+        }
+
+        function populateMaterialSelects() {
+            const select = document.getElementById('mov-material-id');
+            select.innerHTML = db.materials.map(m => `<option value="${m.id}">${m.name} (Доступно: ${m.quantity} ${m.unit})</option>`).join('');
+        }
+
+        function saveMovement(e) {
+            e.preventDefault();
+            const matId = document.getElementById('mov-material-id').value;
+            const amount = parseFloat(document.getElementById('mov-amount').value);
+            const type = document.querySelector('input[name="mov-type"]:checked').value;
+            const author = document.getElementById('mov-author').value;
+            const comment = document.getElementById('mov-comment').value;
+
+            const mat = db.materials.find(m => m.id === matId);
+            if (!mat) return;
+
+            if (type === 'OUT' && mat.quantity < amount) {
+                alert(`Недостаточно материала на складе! Доступно всего: ${mat.quantity} ${mat.unit}`);
+                return;
+            }
+
+            if (type === 'IN') {
+                mat.quantity += amount;
+            } else {
+                mat.quantity -= amount;
+            }
+
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
+
+            db.movements.push({
+                id: 'T' + Date.now(),
+                date: dateStr,
+                type: type,
+                materialId: mat.id,
+                materialName: mat.name,
+                qty: amount,
+                author: author,
+                comment: comment
+            });
+
+            saveDatabase();
+            closeModal('modalQuickMovement');
+            renderMaterialsTable();
+            renderMovementsTable();
+            renderDashboard();
+            showToast("Операция успешно проведена!");
+        }
+
+        function quickAddStock(matId) {
+            populateMaterialSelects();
+            document.getElementById('mov-material-id').value = matId;
+            openModal('modalQuickMovement');
+        }
+
+        function toggleSupplierField() {
+            // Can be expanded for quick supplier linking
+        }
+
+        // --- BOM / BILL OF MATERIALS LOGIC ---
+        function renderBOMList() {
+            const container = document.getElementById('bomListCards');
+            container.innerHTML = db.boms.map((bom, index) => `
+                <div onclick="selectBOM('${bom.id}')" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-amber-500 cursor-pointer transition shadow-sm">
+                    <h4 class="font-bold text-sm">${bom.title}</h4>
+                    <p class="text-xs text-slate-400 mt-1 line-clamp-2">${bom.description}</p>
+                    <div class="mt-3 flex items-center justify-between text-xs text-amber-600 dark:text-amber-400 font-medium">
+                        <span>${bom.items.length} позиций сырья</span>
+                        <span>Открыть спецификацию &rarr;</span>
+                    </div>
+                </div>
+            `).join('');
+
+            if (db.boms.length > 0) {
+                selectBOM(db.boms[0].id);
+            }
+        }
+
+        function selectBOM(bomId) {
+            const bom = db.boms.find(b => b.id === bomId);
+            if (!bom) return;
+
+            const detailView = document.getElementById('bomDetailView');
+            
+            // Calculate total estimated cost
+            let totalBOMCost = 0;
+            const itemsHtml = bom.items.map(item => {
+                const stockMat = db.materials.find(m => m.id === item.materialId);
+                const price = stockMat ? stockMat.price : 0;
+                const cost = price * item.requiredQty;
+                totalBOMCost += cost;
+                const hasEnough = stockMat && stockMat.quantity >= item.requiredQty;
+
+                return `
+                    <tr class="border-b border-slate-100 dark:border-slate-700">
+                        <td class="py-2.5 font-medium text-xs">${item.name}</td>
+                        <td class="py-2.5 text-xs font-bold">${item.requiredQty} ${item.unit}</td>
+                        <td class="py-2.5 text-xs">${stockMat ? stockMat.quantity + ' ' + stockMat.unit : '0'}</td>
+                        <td class="py-2.5 text-xs">${cost.toLocaleString()} ₽</td>
+                        <td class="py-2.5">
+                            ${hasEnough ? 
+                                `<span class="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold px-2 py-0.5 rounded">В наличии</span>` : 
+                                `<span class="text-[10px] bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 font-bold px-2 py-0.5 rounded">Дефицит</span>`
+                            }
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            detailView.innerHTML = `
+                <div class="space-y-4">
+                    <div class="border-b border-slate-200 dark:border-slate-700 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h3 class="font-bold text-xl">${bom.title}</h3>
+                            <p class="text-xs text-slate-400">${bom.description}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block">Себестоимость материалов:</span>
+                            <span class="text-lg font-extrabold text-amber-500">${totalBOMCost.toLocaleString()} ₽</span>
+                        </div>
+                    </div>
+
+                    <h4 class="font-semibold text-sm">Необходимое сырье и комплектующие на 1 единицу:</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="text-xs uppercase text-slate-400 bg-slate-50 dark:bg-slate-900/50">
+                                <tr>
+                                    <th class="p-2">Наименование</th>
+                                    <th class="p-2">Расход</th>
+                                    <th class="p-2">На складе</th>
+                                    <th class="p-2">Стоимость</th>
+                                    <th class="p-2">Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-xl border border-amber-200 dark:border-amber-900/50 mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-lg">
+                                <i class="fa-solid fa-industry"></i>
+                            </div>
+                            <div>
+                                <h5 class="font-bold text-sm">Списание под производство</h5>
+                                <p class="text-xs text-slate-500">Автоматически уменьшит остатки всех материалов из списка</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="bomProduceQty" value="1" min="1" class="w-16 px-2 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-center text-sm font-bold">
+                            <button onclick="executeBOMProduction('${bom.id}')" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition shadow-md">
+                                Списать в производство
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function executeBOMProduction(bomId) {
+            const bom = db.boms.find(b => b.id === bomId);
+            const qtyMultiplier = parseInt(document.getElementById('bomProduceQty').value) || 1;
+
+            if (!bom) return;
+
+            // Check if all items are available
+            for (let item of bom.items) {
+                const mat = db.materials.find(m => m.id === item.materialId);
+                const needed = item.requiredQty * qtyMultiplier;
+                if (!mat || mat.quantity < needed) {
+                    alert(`Недостаточно материала "${item.name}"! Требуется: ${needed}, В наличии: ${mat ? mat.quantity : 0}`);
+                    return;
+                }
+            }
+
+            // Deduct materials and create history record
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
+
+            bom.items.forEach(item => {
+                const mat = db.materials.find(m => m.id === item.materialId);
+                const amount = item.requiredQty * qtyMultiplier;
+                mat.quantity -= amount;
+
+                db.movements.push({
+                    id: 'T' + Date.now() + Math.random().toString(36).substr(2, 4),
+                    date: dateStr,
+                    type: 'OUT',
+                    materialId: mat.id,
+                    materialName: mat.name,
+                    qty: amount,
+                    author: 'Производственный цех',
+                    comment: `Запуск в производство: ${bom.title} (${qtyMultiplier} шт)`
+                });
+            });
+
+            // Automatically add product to Finished/Semi-finished goods tab
+            db.products.push({
+                id: 'P' + Date.now(),
+                name: `${bom.title} (Партия)`,
+                type: 'Готовая мебель',
+                qty: qtyMultiplier,
+                client: 'Производство по БОМ',
+                cost: 0,
+                status: 'В производстве'
+            });
+
+            saveDatabase();
+            selectBOM(bomId);
+            renderMaterialsTable();
+            renderMovementsTable();
+            renderDashboard();
+            showToast(`Успешно списано сырье на ${qtyMultiplier} шт. изделий!`);
+        }
+
+        // --- SUPPLIERS & AUTOMATIC PURCHASE ORDER LOGIC ---
+        function renderSuppliers() {
+            const container = document.getElementById('suppliersContainer');
+            container.innerHTML = db.suppliers.map(s => `
+                <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100">${s.name}</h4>
+                        <p class="text-xs text-amber-600 dark:text-amber-400">${s.category}</p>
+                        <p class="text-xs text-slate-400 mt-1"><i class="fa-solid fa-phone mr-1"></i>${s.phone} (${s.contact})</p>
+                    </div>
+                    <button onclick="deleteSupplier('${s.id}')" class="text-slate-400 hover:text-red-500 text-sm p-1"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function openSupplierModal() {
+            openModal('modalSupplier');
+        }
+
+        function saveSupplier(e) {
+            e.preventDefault();
+            const newSup = {
+                id: 'S' + Date.now(),
+                name: document.getElementById('sup-name').value,
+                category: document.getElementById('sup-category').value || 'Общие материалы',
+                phone: document.getElementById('sup-phone').value || '-',
+                contact: document.getElementById('sup-contact').value || '-'
+            };
+            db.suppliers.push(newSup);
+            saveDatabase();
+            closeModal('modalSupplier');
+            renderSuppliers();
+            showToast("Поставщик сохранен!");
+        }
+
+        function deleteSupplier(id) {
+            if (confirm("Удалить поставщика?")) {
+                db.suppliers = db.suppliers.filter(s => s.id !== id);
+                saveDatabase();
+                renderSuppliers();
+            }
+        }
+
+        function generatePurchaseOrder() {
+            const lowItems = db.materials.filter(m => Number(m.quantity) <= Number(m.minQty));
+            const preview = document.getElementById('purchaseOrderPreview');
+            const actions = document.getElementById('poActions');
+
+            if (lowItems.length === 0) {
+                preview.innerHTML = `
+                    <div class="text-center py-8 text-emerald-600 dark:text-emerald-400">
+                        <i class="fa-solid fa-circle-check text-4xl mb-2"></i>
+                        <p class="font-bold">Все материалы в достатке!</p>
+                        <p class="text-xs text-slate-400">Нет позиций с остатком ниже минимального порога.</p>
+                    </div>
+                `;
+                actions.classList.add('hidden');
+                return;
+            }
+
+            let totalOrderCost = 0;
+            const itemsList = lowItems.map(m => {
+                const orderQty = Math.max(m.minQty * 2 - m.quantity, m.minQty);
+                const cost = orderQty * m.price;
+                totalOrderCost += cost;
+                return `
+                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold text-xs text-slate-800 dark:text-slate-200">${m.name}</p>
+                            <p class="text-[11px] text-slate-400">Текущий остаток: ${m.quantity} ${m.unit} | Рекомендуемый заказ: <strong class="text-amber-500">${orderQty.toFixed(1)} ${m.unit}</strong></p>
+                        </div>
+                        <span class="font-bold text-xs">${cost.toLocaleString()} ₽</span>
+                    </div>
+                `;
+            }).join('');
+
+            preview.innerHTML = `
+                <div class="space-y-3">
+                    <p class="text-xs text-slate-500">Автоматический расчет потребности материалов на основе минимальных порогов:</p>
+                    ${itemsList}
+                    <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 flex justify-between items-center mt-4">
+                        <span class="font-bold text-xs uppercase text-emerald-800 dark:text-emerald-300">Итоговая сумма закупки:</span>
+                        <span class="font-extrabold text-base text-emerald-600 dark:text-emerald-400">${totalOrderCost.toLocaleString()} ₽</span>
+                    </div>
+                </div>
+            `;
+
+            actions.classList.remove('hidden');
+        }
+
+        function copyPOToClipboard() {
+            const lowItems = db.materials.filter(m => Number(m.quantity) <= Number(m.minQty));
+            let text = "ЗАЯВКА НА ЗАКУПКУ МАТЕРИАЛОВ (МебельСклад WMS)\n\n";
+            lowItems.forEach((m, idx) => {
+                const orderQty = Math.max(m.minQty * 2 - m.quantity, m.minQty);
+                text += `${idx + 1}. ${m.name} — ${orderQty.toFixed(1)} ${m.unit}\n`;
+            });
+            
+            // Clipboard standard API / fallback
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = text;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+
+            showToast("Текст заявки скопирован в буфер обмена!");
+        }
+
+        function confirmPurchaseOrderReceived() {
+            const lowItems = db.materials.filter(m => Number(m.quantity) <= Number(m.minQty));
+            if (lowItems.length === 0) return;
+
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
+
+            lowItems.forEach(m => {
+                const orderQty = Math.max(m.minQty * 2 - m.quantity, m.minQty);
+                m.quantity += orderQty;
+
+                db.movements.push({
+                    id: 'T' + Date.now() + Math.random().toString(36).substr(2, 4),
+                    date: dateStr,
+                    type: 'IN',
+                    materialId: m.id,
+                    materialName: m.name,
+                    qty: orderQty,
+                    author: 'Отдел снабжения',
+                    comment: 'Приход по автоматической заявке закупки'
+                });
+            });
+
+            saveDatabase();
+            generatePurchaseOrder();
+            renderMaterialsTable();
+            renderDashboard();
+            showToast("Все закупленные материалы успешно приняты на склад!");
+        }
+
+        // --- UTILS & MODAL HELPERS ---
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function exportToCSV(tableId, filename) {
+            const table = document.getElementById(tableId);
+            let csv = [];
+            const rows = table.querySelectorAll("tr");
+            
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll("td, th");
+                for (let j = 0; j < cols.length - 1; j++) { // exclude last action column
+                    let text = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""');
+                    row.push('"' + text + '"');
+                }
+                csv.push(row.join(";"));
+            }
+
+            const csvFile = new Blob(["\ufeff" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+            const downloadLink = document.createElement("a");
+            downloadLink.download = filename;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>
